@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+.idea/
+.vscode/
+inputs/
+results/
+checkpoints/
+*.pt
+*.pth
+*.ckpt
+*.safetensors
