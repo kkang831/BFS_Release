@@ -15,7 +15,7 @@ pip install -r requirements.txt
 ```
 
 The base model `black-forest-labs/FLUX.1-Fill-dev` is gated. Accept its license
-on Hugging Face and authenticate with `huggingface-cli login` before inference.
+on Hugging Face and authenticate with `hf auth login` before inference.
 
 ## Model weights
 
@@ -28,6 +28,68 @@ BFS inference uses three sets of weights:
 The BFS checkpoint must match the default release architecture (`rank_joint=4`,
 `post_joint=conv`). Use the corresponding command-line options only if your
 checkpoint was trained with different settings.
+
+### Download the base model
+
+`FLUX.1-Fill-dev` is a gated Hugging Face model. First request access and accept
+the license on its model page, then authenticate from the virtual environment:
+
+```bash
+source .venv/bin/activate
+hf auth login
+```
+
+Download the model into the standard Hugging Face cache:
+
+```bash
+hf download black-forest-labs/FLUX.1-Fill-dev
+```
+
+The default cache location is
+`~/.cache/huggingface/hub/models--black-forest-labs--FLUX.1-Fill-dev/`.
+Inference can then use the model ID directly:
+
+```text
+--pretrained_model_name_or_path black-forest-labs/FLUX.1-Fill-dev
+```
+
+To keep a standalone model copy at a specific location instead, use:
+
+```bash
+hf download black-forest-labs/FLUX.1-Fill-dev \
+  --local-dir ./checkpoints/FLUX.1-Fill-dev
+```
+
+In that case, pass `./checkpoints/FLUX.1-Fill-dev` to
+`--pretrained_model_name_or_path`.
+
+### Download the BFS checkpoints
+
+The release checkpoints will be shared through Google Drive. Replace the
+placeholders below with the public download links when they are available:
+
+- Transparency VAE: **[Google Drive link — TODO]**
+- BFS checkpoint: **[Google Drive link — TODO]**
+
+After downloading, arrange the files as follows:
+
+```text
+checkpoints/
+├── transparency_vae/
+│   ├── config.json
+│   └── diffusion_pytorch_model.safetensors
+└── bfs/
+    └── trained_weights.pt
+```
+
+The current local test setup follows this layout. The `checkpoints/` directory
+is excluded from Git because these weight files are large. Use the following
+arguments with this layout:
+
+```text
+--pretrained_trans_vae_path ./checkpoints/transparency_vae
+--pretrained_lora_path ./checkpoints/bfs/trained_weights.pt
+```
 
 ## Input format
 
@@ -59,8 +121,8 @@ should describe that foreground object.
 ```bash
 python3 inference.py \
   --pretrained_model_name_or_path black-forest-labs/FLUX.1-Fill-dev \
-  --pretrained_trans_vae_path /path/to/transparency-vae \
-  --pretrained_lora_path /path/to/bfs-checkpoint \
+  --pretrained_trans_vae_path ./checkpoints/transparency_vae \
+  --pretrained_lora_path ./checkpoints/bfs/trained_weights.pt \
   --input_path ./inputs/images \
   --mask_path ./inputs/masks \
   --foreground_caption_path ./inputs/captions \
