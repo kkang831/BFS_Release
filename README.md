@@ -68,8 +68,8 @@ In that case, pass `./checkpoints/FLUX.1-Fill-dev` to
 The release checkpoints will be shared through Google Drive. Replace the
 placeholders below with the public download links when they are available:
 
-- Transparency VAE: **[Google Drive link — TODO]**
-- BFS checkpoint: **[Google Drive link — TODO]**
+- Transparency VAE: [Link](https://drive.google.com/file/d/1u4ZIz_MRvVDeJ9Qv4E2zLTPxMldy_TGP/view?usp=sharing)
+- BFS checkpoint: [Link](https://drive.google.com/file/d/1AgxztNBgi2vYW4FKA3VTXESNxGUKWf4-/view?usp=sharing)
 
 After downloading, arrange the files as follows:
 

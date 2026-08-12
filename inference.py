@@ -139,10 +139,7 @@ def load_model(args, weight_dtype, device):
     
     patch.hack_lora_forward(flux_transformer)
     
-    checkpoint = Path(args.pretrained_lora_path)
-    lora_state_dict = checkpoint if checkpoint.is_file() else checkpoint / "trained_weights.pt"
-    if not lora_state_dict.is_file():
-        raise FileNotFoundError(f"BFS weights not found: {lora_state_dict}")
+    lora_state_dict = resolve_bfs_checkpoint(args.pretrained_lora_path)
     print(f"Loading BFS weights from {lora_state_dict}")
     flux_transformer.load_state_dict(
         torch.load(lora_state_dict, map_location="cpu", weights_only=True),
@@ -189,10 +186,34 @@ def build_samples(input_path, mask_path, caption_path):
     caption_by_stem = {path.stem: path for path in captions}
     if len(mask_by_stem) != len(masks) or len(caption_by_stem) != len(captions):
         raise ValueError("Mask and caption directories must not contain duplicate filename stems.")
-    missing = [path.stem for path in images if path.stem not in mask_by_stem or path.stem not in caption_by_stem]
-    if missing:
-        raise ValueError("Missing same-named mask or caption for: " + ", ".join(missing))
+    missing_masks = [path.stem for path in images if path.stem not in mask_by_stem]
+    missing_captions = [path.stem for path in images if path.stem not in caption_by_stem]
+    if missing_masks:
+        raise ValueError("Missing same-named mask for: " + ", ".join(missing_masks))
+    if missing_captions:
+        raise ValueError("Missing same-named caption for: " + ", ".join(missing_captions))
     return [(path, mask_by_stem[path.stem], caption_by_stem[path.stem]) for path in images]
+
+
+def validate_samples(samples):
+    """Fail fast on inexpensive input checks before loading GPU models."""
+    for img_path, mask_path, caption_path in samples:
+        if not caption_path.read_text(encoding="utf-8").strip():
+            raise ValueError(f"Caption is empty: {caption_path}")
+        with Image.open(img_path) as image, Image.open(mask_path) as mask:
+            if image.size != mask.size:
+                raise ValueError(
+                    f"Image and mask sizes differ for {img_path.name}: "
+                    f"{image.size} vs {mask.size}"
+                )
+
+
+def resolve_bfs_checkpoint(path):
+    checkpoint = Path(path)
+    weights = checkpoint if checkpoint.is_file() else checkpoint / "trained_weights.pt"
+    if not weights.is_file():
+        raise FileNotFoundError(f"BFS weights not found: {weights}")
+    return weights
 
 
 def main(args):
@@ -200,8 +221,8 @@ def main(args):
     transformers.utils.logging.set_verbosity_warning()
     
     samples = build_samples(args.input_path, args.mask_path, args.foreground_caption_path)
-    result_root = Path(args.output_path)
-    result_root.mkdir(parents=True, exist_ok=True)
+    validate_samples(samples)
+    resolve_bfs_checkpoint(args.pretrained_lora_path)
     
     # ------------------ set up pipeline -------------------
     if not torch.cuda.is_available():
@@ -209,6 +230,8 @@ def main(args):
     device = torch.device('cuda')
     weight_dtype = torch.bfloat16
     flux_transformer, _, trans_vae = load_model(args, weight_dtype, device)
+    result_root = Path(args.output_path)
+    result_root.mkdir(parents=True, exist_ok=True)
     
     bsz = 2
     set_unicon_config(flux_transformer, bsz, device=device, dtype=weight_dtype)
@@ -229,13 +252,9 @@ def main(args):
     # -------------------- start processing ---------------------
     for img_path, mask_path, caption_path in tqdm(samples, desc="BFS inference"):
         foreground_caption = caption_path.read_text(encoding="utf-8").strip()
-        if not foreground_caption:
-            raise ValueError(f"Caption is empty: {caption_path}")
 
         image = Image.open(img_path).convert("RGB")
         mask = Image.open(mask_path).convert("L").convert("RGB")
-        if image.size != mask.size:
-            raise ValueError(f"Image and mask sizes differ for {img_path.name}: {image.size} vs {mask.size}")
         image_or = image.copy()
         
         image = resize_by_short_side(image, args.inference_resize_short, resample=Image.BICUBIC)

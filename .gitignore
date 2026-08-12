@@ -4,9 +4,16 @@ __pycache__/
 .idea/
 .vscode/
 inputs/
+images/
 results/
+test_results/
+bash_outs/
 checkpoints/
 *.pt
 *.pth
 *.ckpt
 *.safetensors
+
+test_*.md
+batch_*.sh
+run_*.sh

@@ -141,7 +141,6 @@ def my_forward(
 
     for index_block, block in enumerate(self.transformer_blocks):
         if torch.is_grad_enabled() and self.gradient_checkpointing:
-            print('ppppppppppppppppppppppppppppppppppppppppppppppppppppp')
             raise NotImplementedError("Gradient checkpointing not implemented yet")
             encoder_hidden_states, hidden_states = self._gradient_checkpointing_func(
                 block,
