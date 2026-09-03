@@ -1,4 +1,6 @@
-# BFS: Back-to-Front Layered Image Synthesis via Knowledge Transfer
+# [SIGGRAPH 2026] Official PyTorch implementation of "BFS: Back-to-Front Layered Image Synthesis via Knowledge Transfer"
+
+Kyoungkook Kang, Gyujin Sim, and Sunghyun Cho
 
 ## Installation
 
@@ -136,6 +138,17 @@ original image.
 
 Run `python3 inference.py --help` for all options. `run_inference.sh` provides a
 short equivalent example using environment variables.
+
+## Citation
+
+```bibtex
+@article{kang2026bfs,
+  title={BFS: Back-to-Front Layered Image Synthesis via Knowledge Transfer},
+  author={Kang, Kyoungkook and Sim, Gyujin and Cho, Sunghyun},
+  journal={arXiv preprint arXiv:2605.24894},
+  year={2026}
+}
+```
 
 ## Acknowledgements
 
